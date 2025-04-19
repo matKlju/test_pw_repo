@@ -1,0 +1,23 @@
+{
+  "name": "test_pw_repo",
+  "version": "1.0.0",
+  "description": "test_pw_repo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matKlju/test_pw_repo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/matKlju/test_pw_repo/issues"
+  },
+  "homepage": "https://github.com/matKlju/test_pw_repo#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}
