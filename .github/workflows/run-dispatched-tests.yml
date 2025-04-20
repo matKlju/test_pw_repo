@@ -33,16 +33,20 @@ jobs:
           npx playwright install
 
       - name: Clone and start test_server
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git clone https://github.com/matKlju/test_server
+          git clone https://x-access-token:$TOKEN@github.com/matKlju/test_server.git
           cd test_server
           npm ci
           nohup node server.js > ../server.log 2>&1 &
           cd ..
 
       - name: Clone and start test_number_generator
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git clone https://github.com/matKlju/test_number_generator
+          git clone https://x-access-token:$TOKEN@github.com/matKlju/test_number_generator.git
           cd test_number_generator
           npm ci
           nohup node server.js > ../generator.log 2>&1 &
