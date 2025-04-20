@@ -10,11 +10,14 @@ jobs:
 
     steps:
       - name: Log task details
+        env:
+          TITLE: ${{ github.event.client_payload.task_title }}
+          DESCRIPTION: ${{ github.event.client_payload.task_description }}
+          ID: ${{ github.event.client_payload.task_id }}
         run: |
-          echo "Task title: ${{ github.event.client_payload.task_title }}"
-          echo "Task description: ${{ github.event.client_payload.task_description }}" | sed 's/"/\\"/g'
-          echo "Task ID: ${{ github.event.client_payload.task_id }}"
-      
+          echo "Task title: $TITLE"
+          printf "Task description: %s\n" "$DESCRIPTION"
+          echo "Task ID: $ID"
       - name: Checkout repo
         uses: actions/checkout@v3
 
