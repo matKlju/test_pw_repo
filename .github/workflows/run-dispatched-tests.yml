@@ -73,28 +73,50 @@ jobs:
             const passedOptionId = '98236657';  // Done
             const failedOptionId = '9cc14ff9';  // AT-R
 
-            const taskId = "${{ github.event.client_payload.task_id }}";
             const testResult = "${{ steps.result.outputs.result }}";
+            const issueId = "${{ github.event.client_payload.task_id }}";
             const optionId = testResult === 'passed' ? passedOptionId : failedOptionId;
 
-            await github.graphql(`
-              mutation {
-                updateProjectV2ItemFieldValue(
-                  input: {
-                    projectId: "${projectId}",
-                    itemId: "${taskId}",
-                    fieldId: "${fieldId}",
-                    value: {
-                      singleSelectOptionId: "${optionId}"
+            const search = await github.graphql(`
+              query($projectId: ID!) {
+                node(id: $projectId) {
+                  ... on ProjectV2 {
+                    items(first: 50) {
+                      nodes {
+                        id
+                        content {
+                          ... on Issue { id }
+                        }
+                      }
                     }
-                  }
-                ) {
-                  projectV2Item {
-                    id
                   }
                 }
               }
-            `);
+            `, { projectId });
+
+            const item = search.node.items.nodes.find(item => item.content?.id === issueId);
+
+            if (!item) throw new Error(`No matching project item found for issueId: ${issueId}`);
+
+            await github.graphql(`
+              mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                updateProjectV2ItemFieldValue(
+                  input: {
+                    projectId: $projectId,
+                    itemId: $itemId,
+                    fieldId: $fieldId,
+                    value: { singleSelectOptionId: $optionId }
+                  }
+                ) {
+                  projectV2Item { id }
+                }
+              }
+            `, {
+              projectId,
+              itemId: item.id,
+              fieldId,
+              optionId
+            });
 
       - name: Upload HTML Report
         if: always()
