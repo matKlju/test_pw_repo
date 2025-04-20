@@ -52,9 +52,115 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
 
+      - name: Determine test result
+        if: always()
+        id: result
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "result=passed" >> $GITHUB_OUTPUT
+          else
+            echo "result=failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update task status in project
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_DISPATCH }}
+          script: |
+            const projectId = 'PVT_kwHOBnoPGc4A3Hxd';
+            const fieldId = 'PVTSSF_lAHOBnoPGc4A3HxdzgsUBaQ';
+            const passedOptionId = '98236657';  // Done
+            const failedOptionId = '9cc14ff9';  // AT-R
+
+            const taskId = "${{ github.event.client_payload.task_id }}";
+            const testResult = "${{ steps.result.outputs.result }}";
+            const optionId = testResult === 'passed' ? passedOptionId : failedOptionId;
+
+            await github.graphql(`
+              mutation {
+                updateProjectV2ItemFieldValue(
+                  input: {
+                    projectId: "${projectId}",
+                    itemId: "${taskId}",
+                    fieldId: "${fieldId}",
+                    value: {
+                      singleSelectOptionId: "${optionId}"
+                    }
+                  }
+                ) {
+                  projectV2Item {
+                    id
+                  }
+                }
+              }
+            `);
+
       - name: Upload HTML Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report
+
+
+# name: Run Playwright Tests from AT Trigger
+
+# on:
+#   repository_dispatch:
+#     types: [run-playwright-tests]
+
+# jobs:
+#   run-tests:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Log task details
+#         env:
+#           TITLE: ${{ github.event.client_payload.task_title }}
+#           DESCRIPTION: ${{ github.event.client_payload.task_description }}
+#           ID: ${{ github.event.client_payload.task_id }}
+#         run: |
+#           echo "Task title: $TITLE"
+#           printf "Task description: %s\n" "$DESCRIPTION"
+#           echo "Task ID: $ID"
+
+#       - name: Checkout test_pw_repo
+#         uses: actions/checkout@v3
+
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '18'
+
+#       - name: Install dependencies for test_pw_repo
+#         run: |
+#           npm ci
+#           npx playwright install
+
+#       - name: Clone and start test_server
+#         run: |
+#           git clone https://github.com/matKlju/test_server.git
+#           cd test_server
+#           npm ci
+#           nohup node server.js > ../server.log 2>&1 &
+#           cd ..
+
+#       - name: Clone and start test_number_generator
+#         run: |
+#           git clone https://github.com/matKlju/test_number_generator.git
+#           cd test_number_generator
+#           npm ci
+#           nohup node server.js > ../generator.log 2>&1 &
+#           cd ..
+#           sleep 5  # Give services time to start
+
+#       - name: Run Playwright tests
+#         run: npx playwright test
+
+#       - name: Upload HTML Report
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: playwright-report
+#           path: playwright-report
