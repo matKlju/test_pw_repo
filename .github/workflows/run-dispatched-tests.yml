@@ -12,7 +12,7 @@ jobs:
       - name: Log task details
         run: |
           echo "Task title: ${{ github.event.client_payload.task_title }}"
-          echo "Task description: ${{ github.event.client_payload.task_description }}"
+          echo "Task description: ${{ github.event.client_payload.task_description }}" | sed 's/"/\\"/g'
           echo "Task ID: ${{ github.event.client_payload.task_id }}"
       
       - name: Checkout repo
